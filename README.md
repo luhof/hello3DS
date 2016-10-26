@@ -15,7 +15,7 @@ Currently exports projects as .3dsx format
 
 ### next
 
-- better hello world-ish (message, user input)
 - image rendering
-- 3D stereoscopic effect with 2D pictures
+- text
+- auto 3D drawing by adding a depth param to objects
 - 3D model loading ?
