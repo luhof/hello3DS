@@ -1,73 +1,89 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <3ds.h>
+#include <time.h>
+#include <math.h>
+#include <sf2d.h>
+
+//adress of the 3DS depth slider
+#define CONFIG_3D_SLIDERSTATE (*(float *)0x1FF81080)
+
 
 int main()
 {
-  // Initializations
-  srvInit();        // services
-  aptInit();        // applets
-  hidInit();        // input
-  gfxInitDefault(); // graphics
-  gfxSet3D(false);  // 3D effect (false for console display)
-  u32 kDown;        // keys down
-  u32 kHeld;        // keys pressed
-  u32 kUp;          // keys up
-  u8* fbTopLeft;    // top left screen's framebuffer
-  u8* fbTopRight;   // top right screen's framebuffer
-  u8* fbBottom;     // bottom screen's framebuffer
 
-  //displaying a console message on the top screen,
-  consoleInit(GFX_TOP, NULL);
-  printf("\x1b[15;19HHello World!");
-  onsoleInit(GFX_BOTTOM, NULL);
-  printf("\x1b[15;19HPress enter to exit :)");
+  sf2d_init();
+  sf2d_set_clear_color(RGBA8(0x40, 0x40, 0x40, 0xFF));
+  sf2d_set_3D(true);
 
-  // Main loop
-  while (aptMainLoop())
-  {
 
-    // Wait for next frame
-    gspWaitForVBlank();
+  float offset3d1 = 0.0f;
+  float offset3d2 = 0.0f;
+  float rad = 0.0f;
 
-    // Read which buttons are currently pressed or not
+  u16 touch_x = 320/2;  // we center these values
+  u16 touch_y = 240/2;
+
+  touchPosition touch;    //stylus position
+  circlePosition circle;  //joystick position
+  u32 held;
+  u32 pressed;
+
+  while(aptMainLoop()){
+
     hidScanInput();
-    kDown = hidKeysDown();
-    kHeld = hidKeysHeld();
-    kUp = hidKeysUp();
+    hidCircleRead(&circle);
+    held = hidKeysHeld();
+    pressed = hidKeysDown();
 
-    // If START button is pressed, break loop and quit
-    if (kDown & KEY_START){
+    /*3D "power depending on 3DS slider.
+    * now two hard coded values so there is a better
+    * depth effect */
+    offset3d1 = CONFIG_3D_SLIDERSTATE * 30.0f;
+    offset3d2 = CONFIG_3D_SLIDERSTATE * 15.0f;
+
+    //start to exit homebrew
+    if(held & KEY_START){
       break;
     }
 
-    // Reset framebuffers
-    fbTopLeft = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
-    fbTopRight = gfxGetFramebuffer(GFX_TOP, GFX_RIGHT, NULL, NULL);
-    fbBottom = gfxGetFramebuffer(GFX_BOTTOM, 0, NULL, NULL);
-    memset(fbTopLeft, 0, 240 * 400 * 3);
-    memset(fbTopRight, 0, 240 * 400 * 3);
-    memset(fbBottom, 0, 240 * 320 * 3);
+    //touchscreen to change touch coordinates
+    if(held & KEY_TOUCH){
+      hidTouchRead(&touch);
+      touch_x = touch.px;
+      touch_y = touch.py;
+    }
 
+    //triggers to randomly change background color
+    if(pressed & (KEY_L | KEY_R)){
+      sf2d_set_clear_color(RGBA8(rand()%255, rand()%255, rand()%255, 255));
+    }
 
-    /** Your code starts here **/
+    //top left screen
+    sf2d_start_frame(GFX_TOP, GFX_LEFT);
+      sf2d_draw_fill_circle(offset3d1 + 150, 100, 50, RGBA8(0x00, 0xFF, 0x00, 0xFF));
+      sf2d_draw_rectangle_rotate(offset3d2 + 180, 40, 40, 40, RGBA8(0xFF, 0xFF, 0x00, 0xFF), 20);
+    sf2d_end_frame();
 
+    //top right screen
+    sf2d_start_frame(GFX_TOP, GFX_RIGHT);
+      sf2d_draw_fill_circle(150, 100, 50, RGBA8(0x00, 0xFF, 0x00, 0xFF));
+      sf2d_draw_rectangle_rotate(180, 40, 40, 40, RGBA8(0xFF, 0xFF, 0x00, 0xFF), 20);
+    sf2d_end_frame();
 
+    //bottom screen
+    sf2d_start_frame(GFX_BOTTOM, GFX_LEFT);
+      sf2d_draw_rectangle_rotate(touch_x, touch_y, 70, 60, RGBA8(0xFF, 0xFF, 0xFF, 0xFF), 3.0f*rad);
+    sf2d_end_frame();
 
-    /** End of your code **/
+    rad += 0.02f;
 
+    sf2d_swapbuffers();
 
-    // Flush and swap framebuffers
-    gfxFlushBuffers();
-    gfxSwapBuffers();
   }
 
-  // Exit
-  gfxExit();
-  hidExit();
-  aptExit();
-  srvExit();
+  sf2d_fini();
 
-  // Return to hbmenu
   return 0;
 }
