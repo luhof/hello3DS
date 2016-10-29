@@ -21,12 +21,11 @@ Currently exports projects as .3dsx format
 - Can display shapes (squares, circles based on sf2d)
 - Load and display PNG/JPEG images at different depth levels
 - Touchscreen / D-PAD / Buttons interactions to move object, change background...
-- superb Bojack / <a href="http://ingenieur-imac.fr">IMAC</a> themed homebrew !
+- superb Bojack / <a href="http://ingenieur-imac.fr">IMAC</a> themed homebrew !<br/>
 <img src="http://i.imgur.com/PWSaSne.png"/>
 
 ### next
 
 - text
 - auto 3D drawing by adding a depth param to objects
--
 - _3D model loading ? --> might wait because needs to get rid of 2D libs and use openGL from scratch_
